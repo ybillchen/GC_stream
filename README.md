@@ -15,14 +15,14 @@ agama
 
 ### Potential models
 
-doi:10.3847/1538-4357/ac93fb (Arora et al. 2022, On the Stability of Tidal Streams in Action Space)
-doi:10.1051/0004-6361/202245117 (Ishchenko et al. 2023, TNG-TVP)
+- doi:10.3847/1538-4357/ac93fb (Arora et al. 2022, On the Stability of Tidal Streams in Action Space)
+- doi:10.1051/0004-6361/202245117 (Ishchenko et al. 2023, TNG-TVP)
 
 ### Stream models
 
-doi:10.1093/mnras/stu1986 (Gibbons et al. 2014, mLCS model)
-doi:10.1088/0004-637X/795/1/94 (Bonaca et al. 2014, stream model)
-doi:10.1093/mnras/stv1198 (Fardal et al. 2015, stream model)
+- doi:10.1093/mnras/stu1986 (Gibbons et al. 2014, mLCS model)
+- doi:10.1088/0004-637X/795/1/94 (Bonaca et al. 2014, stream model)
+- doi:10.1093/mnras/stv1198 (Fardal et al. 2015, stream model)
 
 ## Pipeline
 
