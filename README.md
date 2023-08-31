@@ -27,12 +27,12 @@ agama
 ## Pipeline
 
 1. Backward orbit integration of GCs (survived and dead) until
-  1. Some fixed end time such as t_lb = 10 Gyr
-  2. The formation time of clusters
+  - Some fixed end time such as t_lb = 10 Gyr
+  - The formation time of clusters
 2. Forward evolving
-  1. Distribute tracer particles mass according to GC mass history
-  2. Distribute tracer particles positions and velocities according to some stream sampling algorithm 
-  3. Intergrate the orbits of tracers until t_lb = 0
+  - Distribute tracer particles mass according to GC mass history
+  - Distribute tracer particles positions and velocities according to some stream sampling algorithm 
+  - Intergrate the orbits of tracers until t_lb = 0
 
 Input data structure:
 - A table for time-dependent galaxy potential parameters
