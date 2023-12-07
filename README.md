@@ -2,14 +2,27 @@
 
 ## Intro
 
+Modeling globular cluster streams in time-varying potential.
+
 ## Prerequisite
 
-`python >= 3.6`
+The code is primarily written in `C++` under `C++11` standard. Make sure a proper `C++` compiler is installed. The code also largely rely on the `Agama` library, please install it first. You need to change the `AGAMA_PATH` variable in `Makefile` to your install location of `Agama`. 
+
+<!-- TODO -->
+The code is parallelized using `MPI` (CPU) and `CUDA` (GPU). You therefore need to install one of the `MPI` implementations (`MPICH` or `OPENMPI`) and the `CUDA` package.
+
+Some post-analysis scripts are written in `python >= 3.6`. Make sure the following packages are installed to the required version.
 ```
 numpy
 h5py
 agama
 ```
+
+## Build and Run
+
+First, build the code by running `make`. 
+
+Next, `cd exe` to the folder of executables. There are several tests and our main executable: `main.exe`. You can run it via `./main.exe`.
 
 ## Related papers
 
