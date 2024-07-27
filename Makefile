@@ -23,6 +23,7 @@ SOURCES  = potential_varying.cpp \
 # test and example programs
 TESTSRCS = test_demo.cpp \
 		   test_orbit.cpp \
+		   test_single.cpp \
 
 LIBNAME  = agamaVarying.so
 OBJECTS  = $(patsubst %.cpp,$(OBJDIR)/%.o,$(SOURCES))

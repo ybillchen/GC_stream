@@ -1,0 +1,13 @@
+{
+    "seed": 0,
+    "pot_type": "Evolving",
+    "pot_base_path": "/Users/ybchen/Documents/GC-model/GC-model/model_v1/results/pot_analogues/pot_total_id519311_snap_",
+    "times_path": "/Users/ybchen/Documents/GC-model/GC-model/data/test/TNG_t_list.txt",
+    "mass_history_path": "/Users/ybchen/Documents/GC-model/GC-model/model_v1/results/pid4463640962_id519311_mhist.txt",
+    "gc_orbit_path": "/Users/ybchen/Documents/GC_stream/outputs/sample_gc/save_base.txt",
+    "t_begin_in_Gyr": 9.0,
+    "t_end_in_Gyr": 13.0,
+    "dm_in_Msun": 0.5,
+    "save_path_base": "/Users/ybchen/Documents/GC_stream/outputs/sample_gc/save_ic.txt",
+    "streams_generator": "F15"
+}

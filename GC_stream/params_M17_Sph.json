@@ -1,0 +1,22 @@
+{
+    "seed": 1,
+    "pot_type": "M17",
+    "pot_base_path": "",
+    "times_path": "",
+    "mass_history_path": "/Users/ybchen/Documents/GC_stream/outputs/sample_gc_M17_Sph_fix_rapo40_rperi10_W2/mass_history.txt",
+    "gc_orbit_path": "/Users/ybchen/Documents/GC_stream/outputs/sample_gc_M17_Sph_fix_rapo40_rperi10_W2/save_base.txt",
+    "t_begin_in_Gyr": 0,
+    "t_end_in_Gyr": 3,
+    "dm_in_Msun": 10,
+    "save_path_base": "/Users/ybchen/Documents/GC_stream/outputs/sample_gc_M17_Sph_fix_rapo40_rperi10_W2/save_ic.txt",
+    "streams_generator": "Sph",
+    "mean": [1.6, -30, 0, 1, 20, 0],
+    "cov": [
+        [  0.1225, 0,    0,    0,  -4.9,   0  ],
+        [  0,      529,  0,    0,    0,    0  ],
+        [  0,      0,    144,  0,    0,    0  ],
+        [  0,      0,    0,    0,    0,    0  ],
+        [ -4.9,    0,    0,    0,    400,  0  ],
+        [  0,      0,    0,    0,    0,    484]],
+    "orbit_dependent": 0
+}
