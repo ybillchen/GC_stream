@@ -39,10 +39,10 @@ class StreamDataset(object):
         self.phi2hat = None
 
     def constuct_coord(self):
-        if self.ref == 'Ibata+21':
+        if self.ref == 'Ibata+21' or self.ref == 'mock':
             self.c = coord.SkyCoord(self.ra*u.deg, self.dec*u.deg, distance=self.d*u.kpc,
                 pm_ra_cosdec=self.mu_ra*u.mas/u.yr, pm_dec=self.mu_dec*u.mas/u.yr, frame='icrs')
-        if self.ref == 'Ibata+24':
+        elif self.ref == 'Ibata+24':
             self.c = coord.SkyCoord(self.ra*u.deg, self.dec*u.deg, 
                 pm_ra_cosdec=self.mu_ra*u.mas/u.yr, pm_dec=self.mu_dec*u.mas/u.yr, frame='icrs')
         elif self.ref == 'Ibata+19':
