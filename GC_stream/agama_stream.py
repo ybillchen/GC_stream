@@ -89,20 +89,36 @@ def create_ic_chen24(rng, pot_host, orb_sat, mass_sat):
 
     return ic_stream
 
-def create_stream(create_ic_method, rng, time_total, num_particles, pot_host, posvel_sat, mass_sat, pot_sat=None, **kwargs):
+def integrate_prog(time_total, trajsize, pot_host, posvel_sat):
     # integrate the orbit of the progenitor from its present-day posvel (at time t=0)
     # back in time for an interval time_total, storing the trajectory at num_steps points
     time_sat, orbit_sat = agama.orbit(potential=pot_host, ic=posvel_sat,
-        time=time_total, trajsize=num_particles//2)
+        time=time_total, trajsize=trajsize)
     if time_total < 0:
         # reverse the arrays to make them increasing in time
         time_sat  = time_sat [::-1]
         orbit_sat = orbit_sat[::-1]
+    return time_sat, orbit_sat
+
+def create_stream(create_ic_method, rng, time_total, num_particles, pot_host, posvel_sat, mass_sat, 
+    pot_sat=None, nhalf_release=None, **kwargs):
+
+    if nhalf_release is None:
+        trajsize = num_particles//2
+    else:
+        trajsize = len(nhalf_release)
+    assert len(nhalf_release) == trajsize
+    time_sat, orbit_sat = integrate_prog(time_total, trajsize, pot_host, posvel_sat)
 
     # at each point on the trajectory, create a pair of seed initial conditions
     # for particles released at Lagrange points
-    ic_stream = create_ic_method(rng, pot_host, orbit_sat, mass_sat, **kwargs)
-    time_seed = np.repeat(time_sat, 2)
+    if nhalf_release is None:
+        release_points = orbit_sat
+        time_seed = np.repeat(time_sat, 2)
+    else:
+        release_points = np.repeat(orbit_sat, nhalf_release, axis=0)
+        time_seed = np.repeat(time_sat, 2*nhalf_release)
+    ic_stream = create_ic_method(rng, pot_host, release_points, mass_sat, **kwargs)
     
     if pot_sat is None:
         pot_tot = pot_host

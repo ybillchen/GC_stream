@@ -134,6 +134,10 @@ class StreamDataset(object):
         self.phi2hat = self.phi2 - self.fit_poly(self.phi1)
         self.prog_phi2hat = self.prog_phi2 - self.fit_poly(self.prog_phi1)
 
+    def set_release_time(self, release_time):
+        assert self.ref == 'mock'
+        self.release_time = release_time
+
 
 def rotate1(angles, ra, dec):
     alpha = angles[0]
