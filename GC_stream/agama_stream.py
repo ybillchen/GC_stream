@@ -89,6 +89,47 @@ def create_ic_chen24(rng, pot_host, orb_sat, mass_sat):
 
     return ic_stream
 
+
+def create_ic_grillmair24(rng, pot_host, orb_sat, mass_sat):
+    N = len(orb_sat)
+    x, y, z, vx, vy, vz = orb_sat.T
+    R, L, r = get_rot_mat(x, y, z, vx, vy, vz)
+    d2Phi_dr2 = get_d2Phi_dr2(pot_host, x, y, z)
+    
+    # compute the tidal radius at this radius for each point on the trajectory
+    Omega = L / r**2
+    r_tidal = (agama.G * mass_sat / (Omega**2 - d2Phi_dr2))**(1./3)
+    
+    # assign positions and velocities (in the satellite reference frame) of particles
+    r_tidal = np.repeat(r_tidal, 2)
+
+    Dr = r_tidal
+    Dr = np.full_like(r_tidal, fill_value=0.034)
+    Dv = np.full_like(Dr, fill_value=0.0)
+
+    dx = Dr
+    dy = np.zeros_like(dx)
+    dz = np.zeros_like(dx)
+    dvx = rng.normal(0., Dv*0.577)
+    dvy = rng.normal(0., Dv*0.577) - Dv
+    dvz = rng.normal(0., Dv*0.577)
+
+    dq = np.column_stack([dx, dy, dz])
+    dp = np.column_stack([dvx, dvy, dvz])
+    
+    ic_stream = np.tile(orb_sat, 2).reshape(2*N, 6)
+    # ic_stream = np.tile(np.full_like(orb_sat, fill_value=orb_sat[-1]), 2).reshape(2*N, 6)
+    
+    # trailing arm
+    ic_stream[::2,0:3] += np.einsum('ni,nij->nj', dq[::2], R)
+    ic_stream[::2,3:6] += np.einsum('ni,nij->nj', dp[::2], R)
+    
+    # leading arm
+    ic_stream[1::2,0:3] += np.einsum('ni,nij->nj', -dq[1::2], R)
+    ic_stream[1::2,3:6] += np.einsum('ni,nij->nj', -dp[1::2], R)
+
+    return ic_stream
+
 def integrate_prog(time_total, trajsize, pot_host, posvel_sat):
     # integrate the orbit of the progenitor from its present-day posvel (at time t=0)
     # back in time for an interval time_total, storing the trajectory at num_steps points

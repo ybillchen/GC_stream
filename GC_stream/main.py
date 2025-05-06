@@ -21,7 +21,8 @@ agama.setUnits(mass=1, length=1, velocity=1) # Msun, kpc, km/s
 
 from pot_evolving import Evolving, M17Pot
 from streams_generator import Orbit, MassHistory, \
-    F15StreamsGenerator, SphStreamsGenerator, R24StreamsGenerator
+    F15StreamsGenerator, SphStreamsGenerator, \
+    SphModStreamsGenerator, R24StreamsGenerator
 
 def main(params):
     # random number generator
@@ -59,6 +60,11 @@ def main(params):
         cov = np.array(params["cov"])
         orbit_dependent = bool(params["orbit_dependent"])
         generator = SphStreamsGenerator(pot, mean, cov, orbit_dependent)
+    elif params["streams_generator"] == "SphMod":
+        mean = np.array(params["mean"])
+        cov = np.array(params["cov"])
+        orbit_dependent = bool(params["orbit_dependent"])
+        generator = SphModStreamsGenerator(pot, mean, cov, orbit_dependent)
     else:
         print("Streams generator",
             "%s not recogonized."%params["streams_generator"], 

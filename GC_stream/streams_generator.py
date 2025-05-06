@@ -298,6 +298,93 @@ class SphStreamsGenerator(BaseStreamsGenerator):
 
         return pej, vej
 
+
+class SphModStreamsGenerator(BaseStreamsGenerator):
+    """Streams generator using spherical coordinates (modified)"""
+
+    def __init__(self, pot, mean, cov, orbit_dependent):
+        super(SphModStreamsGenerator, self).__init__(pot)
+        self.name = 'SphMod'
+
+        # variables in the multivariate normal distributions:
+        # 1. Dr_rtid : Dr/rtid
+        # 2. phi     : position azimuth (arcdeg)
+        # 3. theta   : position latitude (arcdeg)
+        # 4. Dv_vesc : Dv/vesc
+        # 5. alpha   : velocity azimuth (arcdeg)
+        # 6. beta    : velocity latitude (arcdeg)
+        self.mean = mean # array of mean values
+        self.cov = cov # covariance matrix
+        self.orbit_dependent = bool(orbit_dependent)
+
+    def sample(self, psat, vsat, msat, time, rng):
+        # calculate the rotation matrix
+        # after rotation, pnew is on x-axis, vnew has no z-component
+        dir_x = psat
+        dir_x = dir_x / np.sqrt(np.sum(dir_x**2))
+        dir_z = np.cross(psat, vsat)
+        dir_z = dir_z / np.sqrt(np.sum(dir_z**2))
+        dir_y = np.cross(dir_z, dir_x)
+        dir_y = dir_y / np.sqrt(np.sum(dir_y**2))
+
+        # [x']   [dir_x]   [x]
+        # [y'] = [dir_y] @ [y]
+        # [z']   [dir_z]   [z]
+        R = np.array([dir_x, dir_y, dir_z]) # rotation matrix
+        Rinv = R.T # inverse of an orthogonal matrix is its transpose
+
+        # rotation
+        pnew = R @ psat
+        vnew = R @ vsat
+
+        direction = 1 - 2*rng.integers(2) # 1:trailing -1:leading 
+        rsat = pnew[0]
+        rtid = self.rtid(rsat, msat, time)
+
+        # calculate the ejection position and velocity
+        [Dr_rtid, phi, theta, Dv_vesc, alpha, beta] = \
+            rng.multivariate_normal(self.mean, self.cov)
+
+        if self.orbit_dependent:
+            vnew_r = vnew[0]
+            vnew_t = vnew[1]
+            vc = self.pot.Vcirc(rsat, time)
+            Dr_rtid += -0.5*vnew_r/vc
+            phi += -30*(-1+vnew_t/vc)
+
+        Dr = Dr_rtid * rtid
+        vesc = np.sqrt(2*gravG*msat/Dr) # escape velocity
+        Dv = Dv_vesc * vesc
+
+        if direction < 0: # leading
+            phi += 180
+            alpha += 180
+
+        theta /= np.sqrt(self.cov[2,2]) 
+        theta *= 12 if Dr_rtid > 1 else 22
+
+        # convert degrees to radians
+        phi *= (np.pi/180)
+        theta *= (np.pi/180)
+        alpha *= (np.pi/180)
+        beta *= (np.pi/180)
+
+        pejnew = pnew + np.array([
+            Dr*np.cos(theta)*np.cos(phi),
+            Dr*np.cos(theta)*np.sin(phi),
+            Dr*np.sin(theta)])
+
+        vejnew = vnew + np.array([
+            Dv*np.cos(beta)*np.cos(alpha),
+            Dv*np.cos(beta)*np.sin(alpha),
+            Dv*np.sin(beta)])
+        
+        # rotation back to the original coordinates
+        pej = Rinv @ pejnew
+        vej = Rinv @ vejnew
+
+        return pej, vej
+
 class C24StreamsGenerator(SphStreamsGenerator):
     """Chen et al. (2024)"""
     def __init__(self, pot,

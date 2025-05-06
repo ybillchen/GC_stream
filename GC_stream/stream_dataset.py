@@ -33,6 +33,7 @@ class StreamDataset(object):
 
         self.constuct_coord()
 
+        self.mat = None
         self.c_GreatCircle = None
         self.phi1 = None
         self.phi2 = None
@@ -78,21 +79,8 @@ class StreamDataset(object):
         self.apply_mask(self.mag <= mag_limit)
 
     def construct_greatcircle(self):
-
-        record = np.inf
-        for guess1 in range(-180,181,30):
-            for guess2 in range(-180,181,30):
-                o = minimize(rotate1, (guess1,guess2), args=(self.c.ra.to_value(u.rad), self.c.dec.to_value(u.rad)))
-                if o.fun < record:
-                    alpha = o.x[0]
-                    beta = o.x[1]
-                    record = o.fun
-        # print(np.sqrt(record)*180/np.pi)
-        o = minimize(rotate2, (0), args=(alpha, beta, self.c.ra.to_value(u.rad), self.c.dec.to_value(u.rad)))
-        # print(np.sqrt(o.fun)*180/np.pi)
-        gamma = o.x[0]
-        # print(alpha, beta, gamma)
-        self.mat = rotation_matrix(gamma*u.deg, 'z') @ rotation_matrix(beta*u.deg, 'x') @ rotation_matrix(alpha*u.deg, 'z')
+        if self.mat is None:
+            self.calc_mat_stream()
 
         class GreatCircle(coord.BaseCoordinateFrame):
             default_representation = coord.SphericalRepresentation
@@ -116,12 +104,58 @@ class StreamDataset(object):
         
         self.GreatCircle = GreatCircle
 
+
+    def calc_mat_stream(self):
+        record = np.inf
+        for guess1 in range(-180,181,30):
+            for guess2 in range(-180,181,30):
+                o = minimize(rotate1, (guess1,guess2), args=(self.c.ra.to_value(u.rad), self.c.dec.to_value(u.rad)))
+                if o.fun < record:
+                    alpha = o.x[0]
+                    beta = o.x[1]
+                    record = o.fun
+        # print(np.sqrt(record)*180/np.pi)
+        o = minimize(rotate2, (0), args=(alpha, beta, self.c.ra.to_value(u.rad), self.c.dec.to_value(u.rad)))
+        # print(np.sqrt(o.fun)*180/np.pi)
+        gamma = o.x[0]
+        # print(alpha, beta, gamma)
+        self.mat = rotation_matrix(gamma*u.deg, 'z') @ rotation_matrix(beta*u.deg, 'x') @ rotation_matrix(alpha*u.deg, 'z')
+
+
+    def calc_mat_prog(self):
+        ra, dec, mu_ra_cosdec, mu_dec = self.c_prog.ra, self.c_prog.dec, self.c_prog.pm_ra_cosdec, self.c_prog.pm_dec
+
+        star_vec = np.array([np.cos(dec)*np.cos(ra), np.cos(dec)*np.sin(ra), np.sin(dec)])
+        star_vec /= np.linalg.norm(star_vec)
+
+        e_ra = np.array([-np.sin(ra),  np.cos(ra), 0.0])
+        e_dec= np.array([-np.sin(dec)*np.cos(ra), -np.sin(dec)*np.sin(ra), np.cos(dec)])
+
+        pm_vec = mu_ra_cosdec * e_ra + mu_dec * e_dec
+        norm_pm = np.linalg.norm(pm_vec)
+        if norm_pm > 0:
+            pm_unit = pm_vec / norm_pm
+        else:
+            # fallback: pick any tangent direction orthogonal to star_vec
+            pm_unit = e_ra - np.dot(e_ra, star_vec)*star_vec
+            pm_unit /= np.linalg.norm(pm_unit)
+
+        y_axis = pm_unit - np.dot(pm_unit, star_vec)*star_vec
+        y_axis /= np.linalg.norm(y_axis)
+
+        z_axis = np.cross(star_vec, y_axis)
+        z_axis /= np.linalg.norm(z_axis)
+
+        self.mat = np.vstack([star_vec, y_axis, z_axis])
+
+
     def construct_greatcircle_coord(self, GreatCircle=None):
         if GreatCircle is None:
             GreatCircle = self.GreatCircle
-        self.c_GreatCircle = self.c.transform_to(GreatCircle())
-        self.phi1 = self.c_GreatCircle.phi1.wrap_at(180*u.deg).to_value(u.deg)
-        self.phi2 = self.c_GreatCircle.phi2.to_value(u.deg)
+        if not self.c is None:
+            self.c_GreatCircle = self.c.transform_to(GreatCircle())
+            self.phi1 = self.c_GreatCircle.phi1.wrap_at(180*u.deg).to_value(u.deg)
+            self.phi2 = self.c_GreatCircle.phi2.to_value(u.deg)
         self.c_prog_GreatCircle = self.c_prog.transform_to(GreatCircle())
         self.prog_phi1 = self.c_prog_GreatCircle.phi1.wrap_at(180*u.deg).to_value(u.deg)
         self.prog_phi2 = self.c_prog_GreatCircle.phi2.to_value(u.deg)
@@ -131,7 +165,8 @@ class StreamDataset(object):
             p = np.polyfit(self.phi1, self.phi2, deg=deg)
         self.p = p
         self.fit_poly = np.poly1d(p)
-        self.phi2hat = self.phi2 - self.fit_poly(self.phi1)
+        if not self.c is None:
+            self.phi2hat = self.phi2 - self.fit_poly(self.phi1)
         self.prog_phi2hat = self.prog_phi2 - self.fit_poly(self.prog_phi1)
 
     def set_release_time(self, release_time):
