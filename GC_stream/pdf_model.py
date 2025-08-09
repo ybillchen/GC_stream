@@ -6,7 +6,7 @@ from scipy.interpolate import RegularGridInterpolator
 def gaussian(u):
     return np.exp(-0.5*u**2)
 
-def kde(Xdata, Xgrid, h, proj_axes=[], error=None):
+def kde(Xdata, Xeval, h, proj_axes=[], error=None, kernel=gaussian):
     assert kernel == gaussian # currently only support gaussian
     non_proj_axes = np.ones(Xdata.shape[1], dtype=bool)
     non_proj_axes[proj_axes] = False
@@ -19,7 +19,7 @@ def kde(Xdata, Xgrid, h, proj_axes=[], error=None):
         )
     dist = np.sqrt(np.sum(
         ((
-            Xgrid[np.newaxis,:,non_proj_axes] - \
+            Xeval[np.newaxis,:,non_proj_axes] - \
             Xdata[:,np.newaxis,non_proj_axes]
         ) / heff)**2, 
         axis=2
@@ -32,11 +32,11 @@ def kde(Xdata, Xgrid, h, proj_axes=[], error=None):
 
 class PDF(object):
     """docstring for PDF"""
-    def __init__(self, data, grids, hs, groups=None):
+    def __init__(self, data, grids, hs, groups):
         """
         data: array-like (N, M): N data points with M dimensions
         grids: list (M): arrays of evaluation grids
-        hs: list (M): bandwidths for Gaussian KDE
+        hs: array-like (N, M): bandwidths for Gaussian KDE
         groups: list
         interp: bool
         """
@@ -52,10 +52,8 @@ class PDF(object):
     def get_pdf(self):
         self.pdfs = []
         for group in self.groups:
-            group_data = self.data[group]
-            group_h = np.column_stack([
-                np.full(self.N, fill_value=h) for h in self.hs[group]
-            ])
+            group_data = self.data[:,group]
+            group_h = self.hs[:,group]
             group_grid = [self.grids[i] for i in group]
             if group_grid[0] is None:
                 # direct KDE
@@ -69,12 +67,19 @@ class PDF(object):
                 
                 group_prob = kde(group_data, group_mesh_flatten, group_h)
                 group_prob = group_prob.reshape(group_mesh[0].shape)
-                self.pdfs.append(
-                    RegularGridInterpolator(group_grid, group_prob)
-                )
+                self.pdfs.append(RegularGridInterpolator(
+                    group_grid,
+                    group_prob,
+                    bounds_error=False,
+                    fill_value=0
+                ))
 
-    def eval_pdf(self, data_eval):
-        prob = np.ones_like(data_eval)
+    def eval_pdf(self, data_eval, err_eval=None):
+        prob = np.ones(len(data_eval))
         for group, pdf in zip(self.groups, self.pdfs):
-            prob *= pdf(data_eval[:,group])
+            group_grid = [self.grids[i] for i in group]
+            if group_grid[0] is None and not err_eval is None:
+                prob *= pdf(Xeval=data_eval[:,group], error=err_eval[:,group])
+            else:
+                prob *= pdf(data_eval[:,group])
         return prob
