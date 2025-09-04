@@ -8,11 +8,13 @@ def load_GC():
 	name_mass_mw = []
 	feh_mw = []
 	name_feh_mw = []
-	f_mw = '../data/combined_table_mass.txt'
+	ebv_mw = []
+	name_ebv_mw = []
+	f_mw = '../data/combined_table.txt'
 	with open(f_mw, 'rb') as reader:
-	    lines = reader.readlines()[2:160]
+	    lines = reader.readlines()[3:170]
 	    for line in lines:
-	        mass_mw.append(np.log10(float(line[65:76])))
+	        mass_mw.append(np.log10(float(line[80:91])))
 	        name_mass_mw.append(str(line[0:13].strip())[2:-1].replace(' ', '_'))
 	f_mw = '../data/mwgc.dat'
 	with open(f_mw, 'rb') as reader:
@@ -23,6 +25,12 @@ def load_GC():
 	            continue
 	        feh_mw.append(float(fehh))
 	        name_feh_mw.append(str(line[1:13].strip())[2:-1].replace(' ', '_'))
+	    for line in lines:
+	        ebv = str(line[24:29].strip())[2:-1]
+	        if len(ebv) == 0:
+	            continue
+	        ebv_mw.append(float(ebv))
+	        name_ebv_mw.append(str(line[1:13].strip())[2:-1].replace(' ', '_'))
 	mass_mw = np.array(mass_mw)
 	name_mass_mw = np.array(name_mass_mw)
 	df = pd.DataFrame({
@@ -34,6 +42,12 @@ def load_GC():
 	df = df.join(pd.DataFrame({
 		'name': name_feh_mw,
 		'feh': feh_mw,
+	}).set_index('name'))
+	ebv_mw = np.array(ebv_mw)
+	name_ebv_mw = np.array(name_ebv_mw)
+	df = df.join(pd.DataFrame({
+		'name': name_ebv_mw,
+		'ebv': ebv_mw,
 	}).set_index('name'))
 
 	# load mw pos and vel
